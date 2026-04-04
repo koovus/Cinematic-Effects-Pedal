@@ -245,20 +245,25 @@ export default function PedalBoard() {
               style={{ background: "rgba(255,255,255,0.08)" }}
             />
 
-            <div className="flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{
-                  background: isPlaying ? currentSchema.accentColor : "rgba(255,255,255,0.15)",
-                  boxShadow: isPlaying ? `0 0 6px ${currentSchema.accentColor}` : undefined,
-                  transition: "all 0.2s",
-                }}
-              />
-              <span
-                className="text-xs uppercase tracking-widest"
-                style={{ color: "rgba(255,255,255,0.35)", fontSize: 8, letterSpacing: "0.15em" }}
-              >
-                {isPlaying ? "Active" : "Standby"}
+            <div className="flex flex-col gap-0.5">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    background: isPlaying ? currentSchema.accentColor : "rgba(255,255,255,0.15)",
+                    boxShadow: isPlaying ? `0 0 6px ${currentSchema.accentColor}` : undefined,
+                    transition: "all 0.2s",
+                  }}
+                />
+                <span
+                  className="text-xs uppercase tracking-widest"
+                  style={{ color: "rgba(255,255,255,0.35)", fontSize: 8, letterSpacing: "0.15em" }}
+                >
+                  {isPlaying ? "Active" : "Standby"}
+                </span>
+              </div>
+              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 7, letterSpacing: "0.05em", paddingLeft: 16 }}>
+                v1.0 by @floozyspeak // Dan Rockwell 2026
               </span>
             </div>
           </div>
