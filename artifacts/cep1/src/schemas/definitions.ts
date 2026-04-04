@@ -1,0 +1,462 @@
+import type { MovieSchema } from "./types";
+
+export const SCHEMAS: MovieSchema[] = [
+  {
+    id: "jurassic-park",
+    title: "Jurassic Park",
+    year: 1993,
+    accentColor: "#4ade80",
+    bgGradient: "linear-gradient(135deg, #0a1a0a 0%, #0d2b0d 50%, #0a1a0a 100%)",
+    textColor: "#4ade80",
+    tagline: "Life finds a way",
+    description:
+      "Roaring reverbs. Thunderous sub-bass rumble. Ambient delay trails that decay like footsteps in the jungle.",
+    ambientDescription: "Sub-bass dino rumble — deep oscillating growl at 40Hz",
+    defaults: {
+      reverbMix: 0.75,
+      reverbDecay: 4.5,
+      distortionAmount: 90,
+      distortionMix: 0.35,
+      delayTime: 0.38,
+      delayFeedback: 0.52,
+      delayMix: 0.42,
+      flangerDepth: 0.25,
+      flangerRate: 0.18,
+      flangerMix: 0.2,
+      filterFreq: 900,
+      filterQ: 1.5,
+      filterType: "lowpass",
+      compThreshold: -22,
+      compRatio: 5,
+      compAttack: 0.08,
+      compRelease: 0.35,
+      masterGain: 0.9,
+      ambientGain: 0.35,
+    },
+    effectGroups: [
+      {
+        label: "Reverb",
+        color: "#4ade80",
+        knobs: [
+          { id: "reverbMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+          { id: "reverbDecay", label: "Decay", min: 0.1, max: 10, step: 0.1, unit: "s" },
+        ],
+      },
+      {
+        label: "Distortion",
+        color: "#86efac",
+        knobs: [
+          { id: "distortionAmount", label: "Drive", min: 0, max: 400, step: 1 },
+          { id: "distortionMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Delay",
+        color: "#bbf7d0",
+        knobs: [
+          { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
+          { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
+          { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Filter",
+        color: "#34d399",
+        knobs: [
+          { id: "filterFreq", label: "Freq", min: 50, max: 15000, step: 10, unit: "Hz", logarithmic: true },
+          { id: "filterQ", label: "Q", min: 0.1, max: 20, step: 0.1 },
+        ],
+      },
+      {
+        label: "Ambient",
+        color: "#059669",
+        knobs: [
+          { id: "ambientGain", label: "Level", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "star-wars",
+    title: "Star Wars",
+    year: 1977,
+    accentColor: "#facc15",
+    bgGradient: "linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 50%, #0a0a1a 100%)",
+    textColor: "#facc15",
+    tagline: "A long time ago in a galaxy far, far away",
+    description:
+      "Laser-bright attacks. Vast space reverb. Feedback delays that trail into infinity. Classical meets cosmic.",
+    ambientDescription: "Lightsaber hum — two detuned oscillators with slow beating",
+    defaults: {
+      reverbMix: 0.88,
+      reverbDecay: 6.5,
+      distortionAmount: 18,
+      distortionMix: 0.1,
+      delayTime: 0.78,
+      delayFeedback: 0.72,
+      delayMix: 0.62,
+      flangerDepth: 0.45,
+      flangerRate: 0.28,
+      flangerMix: 0.38,
+      filterFreq: 5500,
+      filterQ: 1.2,
+      filterType: "highpass",
+      compThreshold: -18,
+      compRatio: 3,
+      compAttack: 0.05,
+      compRelease: 0.4,
+      masterGain: 0.85,
+      ambientGain: 0.3,
+    },
+    effectGroups: [
+      {
+        label: "Reverb",
+        color: "#facc15",
+        knobs: [
+          { id: "reverbMix", label: "Space", min: 0, max: 1, step: 0.01 },
+          { id: "reverbDecay", label: "Decay", min: 0.1, max: 10, step: 0.1, unit: "s" },
+        ],
+      },
+      {
+        label: "Delay",
+        color: "#fde68a",
+        knobs: [
+          { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
+          { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
+          { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Flanger",
+        color: "#fef08a",
+        knobs: [
+          { id: "flangerDepth", label: "Depth", min: 0, max: 1, step: 0.01 },
+          { id: "flangerRate", label: "Rate", min: 0.05, max: 5, step: 0.05, unit: "Hz" },
+          { id: "flangerMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Filter",
+        color: "#eab308",
+        knobs: [
+          { id: "filterFreq", label: "Freq", min: 50, max: 15000, step: 10, unit: "Hz", logarithmic: true },
+          { id: "filterQ", label: "Q", min: 0.1, max: 20, step: 0.1 },
+        ],
+      },
+      {
+        label: "Ambient",
+        color: "#ca8a04",
+        knobs: [
+          { id: "ambientGain", label: "Level", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "chainsaw-massacre",
+    title: "The Texas Chain Saw Massacre",
+    year: 1974,
+    accentColor: "#f97316",
+    bgGradient: "linear-gradient(135deg, #1a0a00 0%, #2b0d00 50%, #1a0a00 100%)",
+    textColor: "#f97316",
+    tagline: "Who will survive and what will be left of them?",
+    description:
+      "Machine shop brutality. Razor distortion. Punishing feedback. The drone of the blade never stops.",
+    ambientDescription: "Chainsaw loop — sawtooth through hard clipping with frequency modulation",
+    defaults: {
+      reverbMix: 0.18,
+      reverbDecay: 1.1,
+      distortionAmount: 360,
+      distortionMix: 0.82,
+      delayTime: 0.09,
+      delayFeedback: 0.42,
+      delayMix: 0.28,
+      flangerDepth: 0.82,
+      flangerRate: 5.5,
+      flangerMix: 0.55,
+      filterFreq: 2200,
+      filterQ: 4.5,
+      filterType: "bandpass",
+      compThreshold: -8,
+      compRatio: 16,
+      compAttack: 0.001,
+      compRelease: 0.08,
+      masterGain: 0.85,
+      ambientGain: 0.4,
+    },
+    effectGroups: [
+      {
+        label: "Distortion",
+        color: "#f97316",
+        knobs: [
+          { id: "distortionAmount", label: "Drive", min: 0, max: 400, step: 1 },
+          { id: "distortionMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Flanger",
+        color: "#fb923c",
+        knobs: [
+          { id: "flangerDepth", label: "Depth", min: 0, max: 1, step: 0.01 },
+          { id: "flangerRate", label: "Rate", min: 0.05, max: 10, step: 0.1, unit: "Hz" },
+          { id: "flangerMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Compressor",
+        color: "#fdba74",
+        knobs: [
+          { id: "compThreshold", label: "Threshold", min: -60, max: 0, step: 1, unit: "dB" },
+          { id: "compRatio", label: "Ratio", min: 1, max: 20, step: 0.5 },
+          { id: "compAttack", label: "Attack", min: 0.001, max: 1, step: 0.001, unit: "s" },
+        ],
+      },
+      {
+        label: "Filter",
+        color: "#c2410c",
+        knobs: [
+          { id: "filterFreq", label: "Freq", min: 50, max: 15000, step: 10, unit: "Hz", logarithmic: true },
+          { id: "filterQ", label: "Q", min: 0.1, max: 20, step: 0.1 },
+        ],
+      },
+      {
+        label: "Ambient",
+        color: "#7c2d12",
+        knobs: [
+          { id: "ambientGain", label: "Level", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "alive",
+    title: "Alive",
+    year: 1993,
+    accentColor: "#7dd3fc",
+    bgGradient: "linear-gradient(135deg, #020b18 0%, #041525 50%, #020b18 100%)",
+    textColor: "#7dd3fc",
+    tagline: "The story of 72 days in the Andes",
+    description:
+      "Vast frozen reverb. Howling wind. A drone of survival. Every sound decays into white silence.",
+    ambientDescription: "Icy wind — narrow bandpass noise sweep with sub drone",
+    defaults: {
+      reverbMix: 0.9,
+      reverbDecay: 5.5,
+      distortionAmount: 28,
+      distortionMix: 0.14,
+      delayTime: 1.2,
+      delayFeedback: 0.65,
+      delayMix: 0.52,
+      flangerDepth: 0.32,
+      flangerRate: 0.08,
+      flangerMix: 0.22,
+      filterFreq: 550,
+      filterQ: 2.0,
+      filterType: "lowpass",
+      compThreshold: -28,
+      compRatio: 4,
+      compAttack: 0.15,
+      compRelease: 0.5,
+      masterGain: 0.8,
+      ambientGain: 0.38,
+    },
+    effectGroups: [
+      {
+        label: "Reverb",
+        color: "#7dd3fc",
+        knobs: [
+          { id: "reverbMix", label: "Frost", min: 0, max: 1, step: 0.01 },
+          { id: "reverbDecay", label: "Decay", min: 0.1, max: 10, step: 0.1, unit: "s" },
+        ],
+      },
+      {
+        label: "Delay",
+        color: "#bae6fd",
+        knobs: [
+          { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
+          { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
+          { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Flanger",
+        color: "#e0f2fe",
+        knobs: [
+          { id: "flangerDepth", label: "Shimmer", min: 0, max: 1, step: 0.01 },
+          { id: "flangerRate", label: "Rate", min: 0.05, max: 5, step: 0.05, unit: "Hz" },
+          { id: "flangerMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Filter",
+        color: "#0ea5e9",
+        knobs: [
+          { id: "filterFreq", label: "Freq", min: 50, max: 15000, step: 10, unit: "Hz", logarithmic: true },
+          { id: "filterQ", label: "Q", min: 0.1, max: 20, step: 0.1 },
+        ],
+      },
+      {
+        label: "Ambient",
+        color: "#0369a1",
+        knobs: [
+          { id: "ambientGain", label: "Wind", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "contact",
+    title: "Contact",
+    year: 1997,
+    accentColor: "#c084fc",
+    bgGradient: "linear-gradient(135deg, #0f0a1a 0%, #1a0d2b 50%, #0f0a1a 100%)",
+    textColor: "#c084fc",
+    tagline: "If it's just us, it seems like an awful waste of space",
+    description:
+      "Interstellar reverb. Radio-filtered textures. Echoes from the edge of the universe.",
+    ambientDescription: "Interstellar static — AM radio noise + sweeping frequency tones",
+    defaults: {
+      reverbMix: 0.95,
+      reverbDecay: 8.5,
+      distortionAmount: 75,
+      distortionMix: 0.28,
+      delayTime: 1.55,
+      delayFeedback: 0.8,
+      delayMix: 0.72,
+      flangerDepth: 0.38,
+      flangerRate: 0.15,
+      flangerMix: 0.3,
+      filterFreq: 1100,
+      filterQ: 6.0,
+      filterType: "bandpass",
+      compThreshold: -20,
+      compRatio: 3.5,
+      compAttack: 0.1,
+      compRelease: 0.4,
+      masterGain: 0.82,
+      ambientGain: 0.32,
+    },
+    effectGroups: [
+      {
+        label: "Reverb",
+        color: "#c084fc",
+        knobs: [
+          { id: "reverbMix", label: "Space", min: 0, max: 1, step: 0.01 },
+          { id: "reverbDecay", label: "Decay", min: 0.1, max: 10, step: 0.1, unit: "s" },
+        ],
+      },
+      {
+        label: "Delay",
+        color: "#d8b4fe",
+        knobs: [
+          { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
+          { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
+          { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Filter",
+        color: "#e9d5ff",
+        knobs: [
+          { id: "filterFreq", label: "Signal", min: 50, max: 15000, step: 10, unit: "Hz", logarithmic: true },
+          { id: "filterQ", label: "Q", min: 0.1, max: 20, step: 0.1 },
+        ],
+      },
+      {
+        label: "Distortion",
+        color: "#a855f7",
+        knobs: [
+          { id: "distortionAmount", label: "Noise", min: 0, max: 400, step: 1 },
+          { id: "distortionMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Ambient",
+        color: "#7e22ce",
+        knobs: [
+          { id: "ambientGain", label: "Signal", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "scarface",
+    title: "Scarface",
+    year: 1983,
+    accentColor: "#f43f5e",
+    bgGradient: "linear-gradient(135deg, #1a0009 0%, #2b000f 50%, #1a0009 100%)",
+    textColor: "#f43f5e",
+    tagline: "Say hello to my little friend",
+    description:
+      "Gated reverb. Pumping compression. Slap delay. 80s excess through a cocaine-dusted mixing board.",
+    ambientDescription: "80s rhythm machine — gated kick and hi-hat pattern",
+    defaults: {
+      reverbMix: 0.6,
+      reverbDecay: 1.5,
+      distortionAmount: 195,
+      distortionMix: 0.48,
+      delayTime: 0.15,
+      delayFeedback: 0.28,
+      delayMix: 0.5,
+      flangerDepth: 0.2,
+      flangerRate: 1.2,
+      flangerMix: 0.15,
+      filterFreq: 180,
+      filterQ: 1.0,
+      filterType: "highpass",
+      compThreshold: -12,
+      compRatio: 14,
+      compAttack: 0.002,
+      compRelease: 0.12,
+      masterGain: 0.9,
+      ambientGain: 0.28,
+    },
+    effectGroups: [
+      {
+        label: "Compressor",
+        color: "#f43f5e",
+        knobs: [
+          { id: "compThreshold", label: "Threshold", min: -60, max: 0, step: 1, unit: "dB" },
+          { id: "compRatio", label: "Ratio", min: 1, max: 20, step: 0.5 },
+          { id: "compRelease", label: "Release", min: 0.01, max: 1, step: 0.01, unit: "s" },
+        ],
+      },
+      {
+        label: "Reverb",
+        color: "#fb7185",
+        knobs: [
+          { id: "reverbMix", label: "Gate", min: 0, max: 1, step: 0.01 },
+          { id: "reverbDecay", label: "Decay", min: 0.1, max: 10, step: 0.1, unit: "s" },
+        ],
+      },
+      {
+        label: "Delay",
+        color: "#fda4af",
+        knobs: [
+          { id: "delayTime", label: "Slap", min: 0, max: 2, step: 0.01, unit: "s" },
+          { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
+          { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Distortion",
+        color: "#e11d48",
+        knobs: [
+          { id: "distortionAmount", label: "Grind", min: 0, max: 400, step: 1 },
+          { id: "distortionMix", label: "Mix", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        label: "Ambient",
+        color: "#9f1239",
+        knobs: [
+          { id: "ambientGain", label: "Rhythm", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+    ],
+  },
+];
+
+export function getSchema(id: string): MovieSchema {
+  return SCHEMAS.find((s) => s.id === id) ?? SCHEMAS[0];
+}
