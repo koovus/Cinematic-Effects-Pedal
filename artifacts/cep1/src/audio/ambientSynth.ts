@@ -432,70 +432,89 @@ export function createScarfaceAmbient(ctx: AudioContext): SchemaAmbient {
   };
 }
 
-async function createContactAmbientFromFiles(
+async function createFromFiles(
   ctx: AudioContext,
-  baseUrl: string
+  schema: string,
+  layers: { file: string; gain: number }[],
+  masterGainValue: number,
+  baseUrl: string,
+  fallback: () => SchemaAmbient
 ): Promise<SchemaAmbient> {
   const masterGain = ctx.createGain();
-  masterGain.gain.value = 0.75;
-
+  masterGain.gain.value = masterGainValue;
   const sources: AudioBufferSourceNode[] = [];
 
-  const LAYERS: { file: string; gain: number }[] = [
+  await Promise.all(
+    layers.map(async ({ file, gain }) => {
+      try {
+        const url = `${baseUrl}sounds/${schema}/${file}`;
+        const response = await fetch(url);
+        if (!response.ok) return;
+        const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        const gainNode = ctx.createGain();
+        gainNode.gain.value = gain;
+        source.connect(gainNode);
+        gainNode.connect(masterGain);
+        sources.push(source);
+        source.start();
+      } catch { /* skip failed layer */ }
+    })
+  );
+
+  if (sources.length === 0) {
+    masterGain.disconnect();
+    return fallback();
+  }
+
+  return {
+    outputNodes: [masterGain],
+    stop: () => { sources.forEach(s => { try { s.stop(); } catch {} }); },
+  };
+}
+
+
+const FILE_LAYERS: Record<string, { file: string; gain: number }[]> = {
+  "jurassic-park": [
+    { file: "layer-1.mp3", gain: 0.5 },
+    { file: "layer-2.mp3", gain: 0.6 },
+    { file: "layer-3.mp3", gain: 0.55 },
+  ],
+  "contact": [
     { file: "layer-1.mp3", gain: 0.25 },
     { file: "layer-2.mp3", gain: 0.35 },
     { file: "layer-3.mp3", gain: 0.5 },
     { file: "layer-4.mp3", gain: 0.6 },
     { file: "layer-5.mp3", gain: 0.65 },
-  ];
+  ],
+};
 
-  async function loadLayer(file: string, gain: number): Promise<void> {
-    try {
-      const url = `${baseUrl}sounds/contact/${file}`;
-      const response = await fetch(url);
-      if (!response.ok) return;
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = await ctx.decodeAudioData(arrayBuffer);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-      const gainNode = ctx.createGain();
-      gainNode.gain.value = gain;
-      source.connect(gainNode);
-      gainNode.connect(masterGain);
-      sources.push(source);
-      source.start();
-    } catch {
-      // layer failed to load — skip silently
-    }
-  }
-
-  await Promise.all(LAYERS.map(({ file, gain }) => loadLayer(file, gain)));
-
-  if (sources.length === 0) {
-    masterGain.disconnect();
-    return createContactAmbient(ctx);
-  }
-
-  return {
-    outputNodes: [masterGain],
-    stop: () => {
-      sources.forEach((s) => { try { s.stop(); } catch {} });
-    },
-  };
-}
+const FALLBACKS: Record<string, (ctx: AudioContext) => SchemaAmbient> = {
+  "jurassic-park": createJurassicAmbient,
+  "contact": createContactAmbient,
+};
 
 export async function createAmbient(
   ctx: AudioContext,
   schemaId: string,
   baseUrl = "/"
 ): Promise<SchemaAmbient> {
+  if (FILE_LAYERS[schemaId]) {
+    return createFromFiles(
+      ctx,
+      schemaId,
+      FILE_LAYERS[schemaId],
+      0.75,
+      baseUrl,
+      () => FALLBACKS[schemaId](ctx)
+    );
+  }
   switch (schemaId) {
-    case "jurassic-park": return createJurassicAmbient(ctx);
     case "star-wars": return createStarWarsAmbient(ctx);
     case "chainsaw-massacre": return createChainsawAmbient(ctx);
     case "alive": return createAliveAmbient(ctx);
-    case "contact": return createContactAmbientFromFiles(ctx, baseUrl);
     case "scarface": return createScarfaceAmbient(ctx);
     default: return createJurassicAmbient(ctx);
   }
