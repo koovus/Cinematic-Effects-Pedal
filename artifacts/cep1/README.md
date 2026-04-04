@@ -27,7 +27,7 @@ Signal flows through nodes in this fixed order:
 
 ```
 Input → Distortion (dry/wet) → Biquad Filter → Dynamics Compressor
-      → Delay (dry/wet, feedback loop) → Reverb/Convolver (dry/wet)
+      → Delay (7 modes, dry/wet) → Reverb/Convolver (dry/wet)
       → Flanger (LFO-modulated delay, dry/wet) → Master Gain
       → Analyser → Output + Recorder
 ```
@@ -38,11 +38,27 @@ Every parameter is exposed as a labeled rotary knob with drag and scroll-wheel i
 |--------|-----------|
 | Reverb | Mix, Decay (procedural impulse response, regenerated on decay change) |
 | Distortion | Drive (waveshaper curve amount), Mix |
-| Delay | Time, Feedback, Mix |
+| Delay | Time, Feedback, Mix, **Mode** (7 algorithms), **Mod** (LFO depth) |
 | Flanger | Depth, Rate, Mix |
 | Filter | Type (lowpass / highpass / bandpass), Frequency, Q |
 | Compressor | Threshold, Ratio, Attack, Release |
 | Master | Volume, Ambient level |
+
+### Delay Modes
+
+The Delay effect panel exposes a 7-mode algorithm selector (pill buttons) plus a **Mod** knob:
+
+| Mode | Algorithm | Character |
+|------|-----------|-----------|
+| **STD** | Single-tap delay with feedback | Clean digital echo |
+| **MULTI** | 3-tap delay (25% / 50% / 100% of Time) | Rhythmic cascading echoes |
+| **BBD** | Bucket-brigade analog emulation: LPF + soft saturation in feedback, LFO pitch wobble | Warm, slightly dark repeats with subtle chorusing |
+| **TAPE** | Tape echo: LPF + soft-clip saturation + wow (0.8 Hz) + flutter (7.3 Hz) LFOs | Aged, drifting echoes with tape character |
+| **VERB** | Reverb-in-feedback: short plate ConvolverNode recirculates in each echo | Reverb blooms inside every repeat |
+| **OCT** | Octave-up pitch shift (granular, 2× speed) with internal feedback | Each repeat rises one octave |
+| **SHIM** | OCT pitch shift + large ConvolverNode reverb wash on output | Shimmering angelic trails |
+
+The **Mod** knob controls the LFO modulation depth — affects BBD wobble, tape wow/flutter; inactive in other modes. All 7 mode sub-graphs are permanently wired in parallel via GainNode gates, so switching modes is instantaneous and click-free (30 ms cross-fade).
 
 ### Signal Visualizer
 Real-time canvas display with two modes switchable by toggle:

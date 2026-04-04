@@ -2,7 +2,17 @@ import { useCallback, useRef, useState } from "react";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { KnobControl } from "@/components/KnobControl";
 import { Waveform } from "@/components/Waveform";
-import type { EffectSettings, MovieSchema } from "@/schemas/types";
+import type { DelayMode, EffectSettings, MovieSchema } from "@/schemas/types";
+
+const DELAY_MODES: { id: DelayMode; label: string }[] = [
+  { id: "standard", label: "STD" },
+  { id: "multitap", label: "MULTI" },
+  { id: "analog",   label: "BBD" },
+  { id: "tape",     label: "TAPE" },
+  { id: "verb",     label: "VERB" },
+  { id: "oct",      label: "OCT" },
+  { id: "shimmer",  label: "SHIM" },
+];
 
 function SchemaCard({
   schema,
@@ -73,6 +83,9 @@ function EffectPanel({
   effectSettings: EffectSettings;
   setParam: (param: keyof EffectSettings, value: number | string) => void;
 }) {
+  const isDelayGroup = (knobs: { id: string }[]) =>
+    knobs.some((k) => k.id === "delayTime");
+
   return (
     <div className="grid grid-cols-1 gap-3">
       {schema.effectGroups.map((group) => (
@@ -86,6 +99,48 @@ function EffectPanel({
           >
             {group.label}
           </div>
+
+          {isDelayGroup(group.knobs) && (
+            <div className="mb-3">
+              <div
+                className="text-xs uppercase mb-1.5"
+                style={{ color: "rgba(255,255,255,0.2)", fontSize: 7, letterSpacing: "0.15em" }}
+              >
+                Mode
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {DELAY_MODES.map((m) => {
+                  const active = effectSettings.delayMode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setParam("delayMode", m.id)}
+                      className="rounded transition-all duration-100"
+                      style={{
+                        padding: "2px 6px",
+                        fontSize: 8,
+                        letterSpacing: "0.1em",
+                        fontWeight: 700,
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                        border: `1px solid ${active ? group.color : "rgba(255,255,255,0.12)"}`,
+                        background: active
+                          ? `${group.color}22`
+                          : "rgba(255,255,255,0.03)",
+                        color: active ? group.color : "rgba(255,255,255,0.35)",
+                        boxShadow: active
+                          ? `0 0 6px ${group.color}44`
+                          : undefined,
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-3">
             {group.knobs.map((knob) => (
               <KnobControl

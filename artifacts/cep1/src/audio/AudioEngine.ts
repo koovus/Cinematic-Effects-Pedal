@@ -1,4 +1,4 @@
-import type { EffectSettings, BiquadType } from "../schemas/types";
+import type { EffectSettings, BiquadType, DelayMode } from "../schemas/types";
 
 function generateIR(ctx: AudioContext, duration: number, decay: number): AudioBuffer {
   const sr = ctx.sampleRate;
@@ -80,27 +80,74 @@ export class AudioEngine {
   private _initialized = false;
 
   private sourceGain!: GainNode;
+
   private distNode!: WaveShaperNode;
   private distDry!: GainNode;
   private distWet!: GainNode;
   private distMix!: GainNode;
+
   private filterNode!: BiquadFilterNode;
   private compNode!: DynamicsCompressorNode;
-  private delayNode!: DelayNode;
-  private delayFeedback!: GainNode;
+
   private delayDry!: GainNode;
   private delayWet!: GainNode;
   private delayMix!: GainNode;
+
+  private stdDelay!: DelayNode;
+  private stdFb!: GainNode;
+  private stdGate!: GainNode;
+
+  private mt1!: DelayNode;
+  private mt2!: DelayNode;
+  private mt3!: DelayNode;
+  private mt1G!: GainNode;
+  private mt2G!: GainNode;
+  private mt3G!: GainNode;
+  private mtMerge!: GainNode;
+  private mtGate!: GainNode;
+
+  private bbdDelay!: DelayNode;
+  private bbdFb!: GainNode;
+  private bbdFilter!: BiquadFilterNode;
+  private bbdSat!: WaveShaperNode;
+  private bbdLfo!: OscillatorNode;
+  private bbdLfoGain!: GainNode;
+  private bbdGate!: GainNode;
+
+  private tapeDelay!: DelayNode;
+  private tapeFb!: GainNode;
+  private tapeFilter!: BiquadFilterNode;
+  private tapeSat!: WaveShaperNode;
+  private wowLfo!: OscillatorNode;
+  private wowGain!: GainNode;
+  private flutterLfo!: OscillatorNode;
+  private flutterGain!: GainNode;
+  private tapeGate!: GainNode;
+
+  private verbDelay!: DelayNode;
+  private verbFb!: GainNode;
+  private verbConv!: ConvolverNode;
+  private verbGate!: GainNode;
+
+  private octWorklet: AudioWorkletNode | null = null;
+  private octGate!: GainNode;
+
+  private shimWorklet: AudioWorkletNode | null = null;
+  private shimConv!: ConvolverNode;
+  private shimGate!: GainNode;
+
   private reverbNode!: ConvolverNode;
   private reverbDry!: GainNode;
   private reverbWet!: GainNode;
   private reverbMix!: GainNode;
+
   private flangerDelay!: DelayNode;
   private flangerLfo!: OscillatorNode;
   private flangerLfoGain!: GainNode;
   private flangerDry!: GainNode;
   private flangerWet!: GainNode;
   private flangerMix!: GainNode;
+
   private masterGain!: GainNode;
   private analyserNode!: AnalyserNode;
   private ambientGainNode!: GainNode;
@@ -119,31 +166,18 @@ export class AudioEngine {
   private _currentSchemaId = "jurassic-park";
   private _playbackOffset = 0;
   private _playbackStartTime = 0;
+  private _currentDelayMode: DelayMode = "standard";
 
   private ambientNodes: AudioNode[] = [];
   private ambientOscillators: OscillatorNode[] = [];
 
-  get isPlaying() {
-    return this._isPlaying;
-  }
-  get isRecording() {
-    return this._isRecording;
-  }
-  get audioSourceType() {
-    return this._audioSourceType;
-  }
-  get analyser(): AnalyserNode {
-    return this.analyserNode;
-  }
-  get hasAudioFile() {
-    return this.audioBuffer !== null;
-  }
-  get sampleRate() {
-    return this.ctx?.sampleRate ?? 44100;
-  }
-  get isReady() {
-    return this._initialized;
-  }
+  get isPlaying() { return this._isPlaying; }
+  get isRecording() { return this._isRecording; }
+  get audioSourceType() { return this._audioSourceType; }
+  get analyser(): AnalyserNode { return this.analyserNode; }
+  get hasAudioFile() { return this.audioBuffer !== null; }
+  get sampleRate() { return this.ctx?.sampleRate ?? 44100; }
+  get isReady() { return this._initialized; }
 
   async initialize(baseUrl: string): Promise<void> {
     if (this._initialized) return;
@@ -153,7 +187,13 @@ export class AudioEngine {
     try {
       await ctx.audioWorklet.addModule(`${baseUrl}wav-recorder-worklet.js`);
     } catch (e) {
-      console.warn("AudioWorklet failed to load — recording disabled:", e);
+      console.warn("AudioWorklet (recorder) failed to load:", e);
+    }
+
+    try {
+      await ctx.audioWorklet.addModule(`${baseUrl}delay-modes-worklet.js`);
+    } catch (e) {
+      console.warn("AudioWorklet (delay modes) failed to load:", e);
     }
 
     this.sourceGain = ctx.createGain();
@@ -166,14 +206,102 @@ export class AudioEngine {
     this.distMix = ctx.createGain();
 
     this.filterNode = ctx.createBiquadFilter();
-
     this.compNode = ctx.createDynamicsCompressor();
 
-    this.delayNode = ctx.createDelay(2.5);
-    this.delayFeedback = ctx.createGain();
     this.delayDry = ctx.createGain();
     this.delayWet = ctx.createGain();
     this.delayMix = ctx.createGain();
+
+    this.stdDelay = ctx.createDelay(2.5);
+    this.stdFb = ctx.createGain();
+    this.stdGate = ctx.createGain();
+    this.stdGate.gain.value = 1;
+
+    this.mt1 = ctx.createDelay(2.5);
+    this.mt2 = ctx.createDelay(2.5);
+    this.mt3 = ctx.createDelay(2.5);
+    this.mt1G = ctx.createGain(); this.mt1G.gain.value = 1.0;
+    this.mt2G = ctx.createGain(); this.mt2G.gain.value = 0.7;
+    this.mt3G = ctx.createGain(); this.mt3G.gain.value = 0.5;
+    this.mtMerge = ctx.createGain();
+    this.mtGate = ctx.createGain();
+    this.mtGate.gain.value = 0;
+
+    this.bbdDelay = ctx.createDelay(2.5);
+    this.bbdFb = ctx.createGain();
+    this.bbdFilter = ctx.createBiquadFilter();
+    this.bbdFilter.type = "lowpass";
+    this.bbdFilter.frequency.value = 4000;
+    this.bbdFilter.Q.value = 0.5;
+    this.bbdSat = ctx.createWaveShaper();
+    this.bbdSat.curve = makeDistCurve(30);
+    this.bbdSat.oversample = "2x";
+    this.bbdLfo = ctx.createOscillator();
+    this.bbdLfo.type = "sine";
+    this.bbdLfo.frequency.value = 3.2;
+    this.bbdLfoGain = ctx.createGain();
+    this.bbdLfoGain.gain.value = 0.004;
+    this.bbdGate = ctx.createGain();
+    this.bbdGate.gain.value = 0;
+
+    this.tapeDelay = ctx.createDelay(2.5);
+    this.tapeFb = ctx.createGain();
+    this.tapeFilter = ctx.createBiquadFilter();
+    this.tapeFilter.type = "lowpass";
+    this.tapeFilter.frequency.value = 6000;
+    this.tapeFilter.Q.value = 0.4;
+    this.tapeSat = ctx.createWaveShaper();
+    this.tapeSat.curve = makeDistCurve(60);
+    this.tapeSat.oversample = "2x";
+    this.wowLfo = ctx.createOscillator();
+    this.wowLfo.type = "sine";
+    this.wowLfo.frequency.value = 0.8;
+    this.wowGain = ctx.createGain();
+    this.wowGain.gain.value = 0.003;
+    this.flutterLfo = ctx.createOscillator();
+    this.flutterLfo.type = "sine";
+    this.flutterLfo.frequency.value = 7.3;
+    this.flutterGain = ctx.createGain();
+    this.flutterGain.gain.value = 0.0003;
+    this.tapeGate = ctx.createGain();
+    this.tapeGate.gain.value = 0;
+
+    this.verbDelay = ctx.createDelay(2.5);
+    this.verbFb = ctx.createGain();
+    this.verbConv = ctx.createConvolver();
+    this.verbConv.buffer = generateIR(ctx, 0.8, 3.0);
+    this.verbGate = ctx.createGain();
+    this.verbGate.gain.value = 0;
+
+    this.octGate = ctx.createGain();
+    this.octGate.gain.value = 0;
+
+    this.shimConv = ctx.createConvolver();
+    this.shimConv.buffer = generateIR(ctx, 3.0, 2.0);
+    this.shimGate = ctx.createGain();
+    this.shimGate.gain.value = 0;
+
+    try {
+      this.octWorklet = new AudioWorkletNode(ctx, "oct-delay", {
+        numberOfInputs: 1,
+        numberOfOutputs: 1,
+        outputChannelCount: [1],
+      });
+    } catch (e) {
+      console.warn("oct-delay worklet unavailable:", e);
+      this.octWorklet = null;
+    }
+
+    try {
+      this.shimWorklet = new AudioWorkletNode(ctx, "oct-delay", {
+        numberOfInputs: 1,
+        numberOfOutputs: 1,
+        outputChannelCount: [1],
+      });
+    } catch (e) {
+      console.warn("shimmer worklet unavailable:", e);
+      this.shimWorklet = null;
+    }
 
     this.reverbNode = ctx.createConvolver();
     this.reverbDry = ctx.createGain();
@@ -202,13 +330,17 @@ export class AudioEngine {
         }
       };
     } catch (e) {
-      console.warn("Failed to create recorder worklet node — recording disabled:", e);
+      console.warn("Recorder worklet unavailable:", e);
       this.recorderWorklet = null;
     }
 
     this._wireChain();
 
     this.flangerLfo.start();
+    this.bbdLfo.start();
+    this.wowLfo.start();
+    this.flutterLfo.start();
+
     this._initialized = true;
   }
 
@@ -225,12 +357,10 @@ export class AudioEngine {
     this.filterNode.connect(this.compNode);
 
     this.compNode.connect(this.delayDry);
-    this.compNode.connect(this.delayNode);
-    this.delayNode.connect(this.delayFeedback);
-    this.delayFeedback.connect(this.delayNode);
-    this.delayNode.connect(this.delayWet);
     this.delayDry.connect(this.delayMix);
     this.delayWet.connect(this.delayMix);
+
+    this._wireDelaySection();
 
     this.delayMix.connect(this.reverbDry);
     this.delayMix.connect(this.reverbNode);
@@ -253,6 +383,105 @@ export class AudioEngine {
     if (this.recorderWorklet) {
       this.masterGain.connect(this.recorderWorklet);
     }
+  }
+
+  private _wireDelaySection() {
+    const c = this.compNode;
+
+    c.connect(this.stdDelay);
+    this.stdDelay.connect(this.stdFb);
+    this.stdFb.connect(this.stdDelay);
+    this.stdDelay.connect(this.stdGate);
+    this.stdGate.connect(this.delayWet);
+
+    c.connect(this.mt1);
+    c.connect(this.mt2);
+    c.connect(this.mt3);
+    this.mt1.connect(this.mt1G);
+    this.mt2.connect(this.mt2G);
+    this.mt3.connect(this.mt3G);
+    this.mt1G.connect(this.mtMerge);
+    this.mt2G.connect(this.mtMerge);
+    this.mt3G.connect(this.mtMerge);
+    this.mtMerge.connect(this.mtGate);
+    this.mtGate.connect(this.delayWet);
+
+    c.connect(this.bbdDelay);
+    this.bbdDelay.connect(this.bbdFilter);
+    this.bbdFilter.connect(this.bbdSat);
+    this.bbdSat.connect(this.bbdFb);
+    this.bbdFb.connect(this.bbdDelay);
+    this.bbdDelay.connect(this.bbdGate);
+    this.bbdGate.connect(this.delayWet);
+    this.bbdLfo.connect(this.bbdLfoGain);
+    this.bbdLfoGain.connect(this.bbdDelay.delayTime);
+
+    c.connect(this.tapeDelay);
+    this.tapeDelay.connect(this.tapeFilter);
+    this.tapeFilter.connect(this.tapeSat);
+    this.tapeSat.connect(this.tapeFb);
+    this.tapeFb.connect(this.tapeDelay);
+    this.tapeDelay.connect(this.tapeGate);
+    this.tapeGate.connect(this.delayWet);
+    this.wowLfo.connect(this.wowGain);
+    this.wowGain.connect(this.tapeDelay.delayTime);
+    this.flutterLfo.connect(this.flutterGain);
+    this.flutterGain.connect(this.tapeDelay.delayTime);
+
+    c.connect(this.verbDelay);
+    this.verbDelay.connect(this.verbConv);
+    this.verbConv.connect(this.verbFb);
+    this.verbFb.connect(this.verbDelay);
+    this.verbConv.connect(this.verbGate);
+    this.verbGate.connect(this.delayWet);
+
+    if (this.octWorklet) {
+      c.connect(this.octWorklet);
+      this.octWorklet.connect(this.octGate);
+      this.octGate.connect(this.delayWet);
+    }
+
+    if (this.shimWorklet) {
+      c.connect(this.shimWorklet);
+      this.shimWorklet.connect(this.shimConv);
+      this.shimConv.connect(this.shimGate);
+      this.shimGate.connect(this.delayWet);
+    }
+  }
+
+  setDelayMode(mode: DelayMode) {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const gates: Record<DelayMode, GainNode> = {
+      standard: this.stdGate,
+      multitap: this.mtGate,
+      analog:   this.bbdGate,
+      tape:     this.tapeGate,
+      verb:     this.verbGate,
+      oct:      this.octGate,
+      shimmer:  this.shimGate,
+    };
+    for (const gate of Object.values(gates)) {
+      gate.gain.setTargetAtTime(0, now, 0.015);
+    }
+    if (mode === "oct" && !this.octWorklet) {
+      gates["standard"].gain.setTargetAtTime(1, now + 0.03, 0.015);
+      this._currentDelayMode = "standard";
+    } else if (mode === "shimmer" && !this.shimWorklet) {
+      gates["verb"].gain.setTargetAtTime(1, now + 0.03, 0.015);
+      this._currentDelayMode = "verb";
+    } else {
+      gates[mode].gain.setTargetAtTime(1, now + 0.03, 0.015);
+      this._currentDelayMode = mode;
+    }
+  }
+
+  setDelayModulation(depth: number) {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    this.bbdLfoGain.gain.setTargetAtTime(depth * 0.008, now, 0.05);
+    this.wowGain.gain.setTargetAtTime(depth * 0.004, now, 0.05);
+    this.flutterGain.gain.setTargetAtTime(depth * 0.0005, now, 0.05);
   }
 
   async resume() {
@@ -278,10 +507,43 @@ export class AudioEngine {
     this.compNode.attack.setTargetAtTime(s.compAttack, now, 0.01);
     this.compNode.release.setTargetAtTime(s.compRelease, now, 0.01);
 
-    this.delayNode.delayTime.setTargetAtTime(s.delayTime, now, 0.05);
-    this.delayFeedback.gain.setTargetAtTime(Math.min(0.95, s.delayFeedback), now, 0.01);
+    const dt = s.delayTime;
+    const fb = Math.min(0.95, s.delayFeedback);
+
+    this.stdDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+    this.stdFb.gain.setTargetAtTime(fb, now, 0.01);
+
+    this.mt1.delayTime.setTargetAtTime(Math.max(0.001, dt * 0.25), now, 0.05);
+    this.mt2.delayTime.setTargetAtTime(Math.max(0.001, dt * 0.5), now, 0.05);
+    this.mt3.delayTime.setTargetAtTime(Math.max(0.001, dt), now, 0.05);
+
+    this.bbdDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+    this.bbdFb.gain.setTargetAtTime(fb, now, 0.01);
+
+    this.tapeDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+    this.tapeFb.gain.setTargetAtTime(fb, now, 0.01);
+
+    this.verbDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+    this.verbFb.gain.setTargetAtTime(Math.min(0.55, fb), now, 0.01);
+
+    if (this.octWorklet) {
+      const tp = this.octWorklet.parameters;
+      tp.get("delayTime")?.setTargetAtTime(dt, now, 0.05);
+      tp.get("feedback")?.setTargetAtTime(fb, now, 0.01);
+    }
+    if (this.shimWorklet) {
+      const tp = this.shimWorklet.parameters;
+      tp.get("delayTime")?.setTargetAtTime(dt, now, 0.05);
+      tp.get("feedback")?.setTargetAtTime(fb, now, 0.01);
+    }
+
     this.delayDry.gain.setTargetAtTime(1 - s.delayMix, now, 0.01);
     this.delayWet.gain.setTargetAtTime(s.delayMix, now, 0.01);
+
+    if (s.delayMode !== this._currentDelayMode) {
+      this.setDelayMode(s.delayMode);
+    }
+    this.setDelayModulation(s.delayModulation);
 
     this.reverbNode.buffer = generateIR(this.ctx, s.reverbDecay, 2.5);
     this.reverbDry.gain.setTargetAtTime(1 - s.reverbMix, now, 0.02);
@@ -315,15 +577,38 @@ export class AudioEngine {
         this.distDry.gain.setTargetAtTime(1 - (value as number), now, 0.01);
         this.distWet.gain.setTargetAtTime(value as number, now, 0.01);
         break;
-      case "delayTime":
-        this.delayNode.delayTime.setTargetAtTime(value as number, now, 0.05);
+      case "delayTime": {
+        const dt = value as number;
+        this.stdDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+        this.mt1.delayTime.setTargetAtTime(Math.max(0.001, dt * 0.25), now, 0.05);
+        this.mt2.delayTime.setTargetAtTime(Math.max(0.001, dt * 0.5), now, 0.05);
+        this.mt3.delayTime.setTargetAtTime(Math.max(0.001, dt), now, 0.05);
+        this.bbdDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+        this.tapeDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+        this.verbDelay.delayTime.setTargetAtTime(dt, now, 0.05);
+        this.octWorklet?.parameters.get("delayTime")?.setTargetAtTime(dt, now, 0.05);
+        this.shimWorklet?.parameters.get("delayTime")?.setTargetAtTime(dt, now, 0.05);
         break;
-      case "delayFeedback":
-        this.delayFeedback.gain.setTargetAtTime(Math.min(0.95, value as number), now, 0.01);
+      }
+      case "delayFeedback": {
+        const fb = Math.min(0.95, value as number);
+        this.stdFb.gain.setTargetAtTime(fb, now, 0.01);
+        this.bbdFb.gain.setTargetAtTime(fb, now, 0.01);
+        this.tapeFb.gain.setTargetAtTime(fb, now, 0.01);
+        this.verbFb.gain.setTargetAtTime(Math.min(0.55, fb), now, 0.01);
+        this.octWorklet?.parameters.get("feedback")?.setTargetAtTime(fb, now, 0.01);
+        this.shimWorklet?.parameters.get("feedback")?.setTargetAtTime(fb, now, 0.01);
         break;
+      }
       case "delayMix":
         this.delayDry.gain.setTargetAtTime(1 - (value as number), now, 0.01);
         this.delayWet.gain.setTargetAtTime(value as number, now, 0.01);
+        break;
+      case "delayMode":
+        this.setDelayMode(value as DelayMode);
+        break;
+      case "delayModulation":
+        this.setDelayModulation(value as number);
         break;
       case "flangerDepth":
         this.flangerLfoGain.gain.setTargetAtTime((value as number) * 0.01, now, 0.05);
@@ -438,9 +723,7 @@ export class AudioEngine {
 
   connectAmbient(nodes: AudioNode[]) {
     this.stopAmbient();
-    for (const n of nodes) {
-      n.connect(this.ambientGainNode);
-    }
+    for (const n of nodes) n.connect(this.ambientGainNode);
     this.ambientNodes = nodes;
   }
 
@@ -482,6 +765,7 @@ export class AudioEngine {
 
   triggerGlitch(currentSettings: EffectSettings): EffectSettings {
     if (!this.ctx) return currentSettings;
+    const delayModes: DelayMode[] = ["standard", "multitap", "analog", "tape", "verb", "oct", "shimmer"];
     const glitchSettings: EffectSettings = {
       reverbMix: Math.random() * 0.5 + 0.5,
       reverbDecay: Math.random() * 8 + 1,
@@ -490,6 +774,8 @@ export class AudioEngine {
       delayTime: Math.random() * 1.8 + 0.05,
       delayFeedback: Math.random() * 0.6 + 0.3,
       delayMix: Math.random() * 0.8 + 0.1,
+      delayMode: delayModes[Math.floor(Math.random() * delayModes.length)],
+      delayModulation: Math.random(),
       flangerDepth: Math.random() * 0.9 + 0.1,
       flangerRate: Math.random() * 9 + 0.5,
       flangerMix: Math.random() * 0.8 + 0.2,

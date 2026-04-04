@@ -8,6 +8,15 @@ export type BiquadType =
   | "lowshelf"
   | "highshelf";
 
+export type DelayMode =
+  | "standard"
+  | "multitap"
+  | "analog"
+  | "tape"
+  | "verb"
+  | "oct"
+  | "shimmer";
+
 export interface EffectSettings {
   reverbMix: number;
   reverbDecay: number;
@@ -16,6 +25,8 @@ export interface EffectSettings {
   delayTime: number;
   delayFeedback: number;
   delayMix: number;
+  delayMode: DelayMode;
+  delayModulation: number;
   flangerDepth: number;
   flangerRate: number;
   flangerMix: number;
