@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "wNXwj3HGqEU6xoSLCj9ro"
+uri = "file://artifacts/cep1/README.md"
+type = "text"
+title = "CEP1 README"
