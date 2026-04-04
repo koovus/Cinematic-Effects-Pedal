@@ -141,13 +141,20 @@ export class AudioEngine {
   get sampleRate() {
     return this.ctx?.sampleRate ?? 44100;
   }
+  get isReady() {
+    return this._initialized;
+  }
 
   async initialize(baseUrl: string): Promise<void> {
     if (this._initialized) return;
     this.ctx = new AudioContext({ sampleRate: 44100 });
     const ctx = this.ctx;
 
-    await ctx.audioWorklet.addModule(`${baseUrl}wav-recorder-worklet.js`);
+    try {
+      await ctx.audioWorklet.addModule(`${baseUrl}wav-recorder-worklet.js`);
+    } catch (e) {
+      console.warn("AudioWorklet failed to load — recording disabled:", e);
+    }
 
     this.sourceGain = ctx.createGain();
     this.sourceGain.gain.value = 1.0;
@@ -186,13 +193,18 @@ export class AudioEngine {
     this.analyserNode.fftSize = 2048;
     this.ambientGainNode = ctx.createGain();
 
-    this.recorderWorklet = new AudioWorkletNode(ctx, "wav-recorder");
-    this.recorderWorklet.port.onmessage = (e) => {
-      if (this._isRecording) {
-        this.leftChunks.push(e.data.left);
-        this.rightChunks.push(e.data.right);
-      }
-    };
+    try {
+      this.recorderWorklet = new AudioWorkletNode(ctx, "wav-recorder");
+      this.recorderWorklet.port.onmessage = (e) => {
+        if (this._isRecording) {
+          this.leftChunks.push(e.data.left);
+          this.rightChunks.push(e.data.right);
+        }
+      };
+    } catch (e) {
+      console.warn("Failed to create recorder worklet node — recording disabled:", e);
+      this.recorderWorklet = null;
+    }
 
     this._wireChain();
 
@@ -238,7 +250,9 @@ export class AudioEngine {
     this.ambientGainNode.connect(this.masterGain);
     this.masterGain.connect(this.analyserNode);
     this.analyserNode.connect(this.ctx.destination);
-    this.masterGain.connect(this.recorderWorklet!);
+    if (this.recorderWorklet) {
+      this.masterGain.connect(this.recorderWorklet);
+    }
   }
 
   async resume() {

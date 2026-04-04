@@ -51,9 +51,9 @@ export function useAudioEngine(): AudioEngineState {
   const initRef = useRef(false);
 
   const ensureInit = useCallback(async () => {
-    if (initRef.current) return;
-    initRef.current = true;
+    if (engine.isReady) return;
     await engine.initialize(BASE_URL);
+    initRef.current = true;
     engine.applySettings(getSchema("jurassic-park").defaults);
     setAnalyser(engine.analyser);
     setIsInitialized(true);
