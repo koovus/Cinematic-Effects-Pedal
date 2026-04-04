@@ -2,17 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { useAudioEngine } from "@/hooks/useAudioEngine";
 import { KnobControl } from "@/components/KnobControl";
 import { Waveform } from "@/components/Waveform";
-import type { DelayMode, EffectSettings, MovieSchema } from "@/schemas/types";
-
-const DELAY_MODES: { id: DelayMode; label: string }[] = [
-  { id: "standard", label: "STD" },
-  { id: "multitap", label: "MULTI" },
-  { id: "analog",   label: "BBD" },
-  { id: "tape",     label: "TAPE" },
-  { id: "verb",     label: "VERB" },
-  { id: "oct",      label: "OCT" },
-  { id: "shimmer",  label: "SHIM" },
-];
+import type { EffectSettings, MovieSchema } from "@/schemas/types";
 
 function SchemaCard({
   schema,
@@ -83,8 +73,8 @@ function EffectPanel({
   effectSettings: EffectSettings;
   setParam: (param: keyof EffectSettings, value: number | string) => void;
 }) {
-  const isDelayGroup = (knobs: { id: string }[]) =>
-    knobs.some((k) => k.id === "delayTime");
+  const rotaryKnobs = (group: typeof schema.effectGroups[number]) =>
+    group.knobs.filter((k) => !k.options);
 
   return (
     <div className="grid grid-cols-1 gap-3">
@@ -100,56 +90,54 @@ function EffectPanel({
             {group.label}
           </div>
 
-          {isDelayGroup(group.knobs) && (
-            <div className="mb-3">
-              <div
-                className="text-xs uppercase mb-1.5"
-                style={{ color: "rgba(255,255,255,0.2)", fontSize: 7, letterSpacing: "0.15em" }}
-              >
-                Mode
+          {group.knobs.map((knob) =>
+            knob.options ? (
+              <div key={knob.id} className="mb-3">
+                <div
+                  className="text-xs uppercase mb-1.5"
+                  style={{ color: "rgba(255,255,255,0.2)", fontSize: 7, letterSpacing: "0.15em" }}
+                >
+                  {knob.label}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {knob.options.map((opt) => {
+                    const active = (effectSettings[knob.id] as string) === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => setParam(knob.id, opt.id)}
+                        className="rounded transition-all duration-100"
+                        style={{
+                          padding: "2px 6px",
+                          fontSize: 8,
+                          letterSpacing: "0.1em",
+                          fontWeight: 700,
+                          fontFamily: "inherit",
+                          cursor: "pointer",
+                          border: `1px solid ${active ? group.color : "rgba(255,255,255,0.12)"}`,
+                          background: active ? `${group.color}22` : "rgba(255,255,255,0.03)",
+                          color: active ? group.color : "rgba(255,255,255,0.35)",
+                          boxShadow: active ? `0 0 6px ${group.color}44` : undefined,
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1">
-                {DELAY_MODES.map((m) => {
-                  const active = effectSettings.delayMode === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => setParam("delayMode", m.id)}
-                      className="rounded transition-all duration-100"
-                      style={{
-                        padding: "2px 6px",
-                        fontSize: 8,
-                        letterSpacing: "0.1em",
-                        fontWeight: 700,
-                        fontFamily: "inherit",
-                        cursor: "pointer",
-                        border: `1px solid ${active ? group.color : "rgba(255,255,255,0.12)"}`,
-                        background: active
-                          ? `${group.color}22`
-                          : "rgba(255,255,255,0.03)",
-                        color: active ? group.color : "rgba(255,255,255,0.35)",
-                        boxShadow: active
-                          ? `0 0 6px ${group.color}44`
-                          : undefined,
-                      }}
-                    >
-                      {m.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            ) : null
           )}
 
           <div className="flex flex-wrap gap-3">
-            {group.knobs.map((knob) => (
+            {rotaryKnobs(group).map((knob) => (
               <KnobControl
                 key={knob.id}
                 label={knob.label}
                 value={effectSettings[knob.id] as number}
-                min={knob.min}
-                max={knob.max}
-                step={knob.step}
+                min={knob.min ?? 0}
+                max={knob.max ?? 1}
+                step={knob.step ?? 0.01}
                 unit={knob.unit}
                 logarithmic={knob.logarithmic}
                 color={group.color}

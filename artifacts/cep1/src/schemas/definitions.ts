@@ -1,4 +1,18 @@
-import type { MovieSchema, EffectSettings } from "./types";
+import type { MovieSchema, EffectSettings, KnobDef } from "./types";
+
+const DELAY_MODE_KNOB: KnobDef = {
+  id: "delayMode",
+  label: "Mode",
+  options: [
+    { id: "standard", label: "STD" },
+    { id: "multitap", label: "MULTI" },
+    { id: "analog",   label: "BBD" },
+    { id: "tape",     label: "TAPE" },
+    { id: "verb",     label: "VERB" },
+    { id: "oct",      label: "OCT" },
+    { id: "shimmer",  label: "SHIM" },
+  ],
+};
 
 export const CLEAN_SIGNAL_PRESET: EffectSettings = {
   reverbMix: 0,
@@ -80,6 +94,7 @@ export const SCHEMAS: MovieSchema[] = [
         label: "Delay",
         color: "#bbf7d0",
         knobs: [
+          DELAY_MODE_KNOB,
           { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
           { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
           { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
@@ -150,6 +165,7 @@ export const SCHEMAS: MovieSchema[] = [
         label: "Delay",
         color: "#fde68a",
         knobs: [
+          DELAY_MODE_KNOB,
           { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
           { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
           { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
@@ -247,6 +263,7 @@ export const SCHEMAS: MovieSchema[] = [
         label: "Delay",
         color: "#fdba74",
         knobs: [
+          DELAY_MODE_KNOB,
           { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
           { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
           { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
@@ -317,6 +334,7 @@ export const SCHEMAS: MovieSchema[] = [
         label: "Delay",
         color: "#bae6fd",
         knobs: [
+          DELAY_MODE_KNOB,
           { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
           { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
           { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
@@ -396,6 +414,7 @@ export const SCHEMAS: MovieSchema[] = [
         label: "Delay",
         color: "#d8b4fe",
         knobs: [
+          DELAY_MODE_KNOB,
           { id: "delayTime", label: "Time", min: 0, max: 2, step: 0.01, unit: "s" },
           { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
           { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },
@@ -483,6 +502,7 @@ export const SCHEMAS: MovieSchema[] = [
         label: "Delay",
         color: "#fda4af",
         knobs: [
+          DELAY_MODE_KNOB,
           { id: "delayTime", label: "Slap", min: 0, max: 2, step: 0.01, unit: "s" },
           { id: "delayFeedback", label: "Feedback", min: 0, max: 0.95, step: 0.01 },
           { id: "delayMix", label: "Mix", min: 0, max: 1, step: 0.01 },

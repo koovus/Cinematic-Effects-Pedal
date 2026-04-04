@@ -41,14 +41,20 @@ export interface EffectSettings {
   ambientGain: number;
 }
 
+export interface KnobOption {
+  id: string;
+  label: string;
+}
+
 export interface KnobDef {
   id: keyof EffectSettings;
   label: string;
-  min: number;
-  max: number;
-  step: number;
+  min?: number;
+  max?: number;
+  step?: number;
   unit?: string;
   logarithmic?: boolean;
+  options?: KnobOption[];
 }
 
 export interface EffectGroup {

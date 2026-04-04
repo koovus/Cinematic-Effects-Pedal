@@ -293,13 +293,13 @@ export class AudioEngine {
     }
 
     try {
-      this.shimWorklet = new AudioWorkletNode(ctx, "oct-delay", {
+      this.shimWorklet = new AudioWorkletNode(ctx, "shimmer-delay", {
         numberOfInputs: 1,
         numberOfOutputs: 1,
         outputChannelCount: [1],
       });
     } catch (e) {
-      console.warn("shimmer worklet unavailable:", e);
+      console.warn("shimmer-delay worklet unavailable:", e);
       this.shimWorklet = null;
     }
 
