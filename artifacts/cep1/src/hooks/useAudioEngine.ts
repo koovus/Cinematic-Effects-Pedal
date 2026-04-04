@@ -44,7 +44,7 @@ export function useAudioEngine(): AudioEngineState {
   const [hasAudioFile, setHasAudioFile] = useState(false);
   const [currentSchemaId, setCurrentSchemaId] = useState("jurassic-park");
   const [fileName, setFileName] = useState<string | null>(null);
-  const [ambientEnabled, setAmbientEnabled] = useState(true);
+  const [ambientEnabled, setAmbientEnabled] = useState(false);
   const [effectSettings, setEffectSettings] = useState<EffectSettings>(
     getSchema("jurassic-park").defaults
   );
@@ -68,14 +68,13 @@ export function useAudioEngine(): AudioEngineState {
         ambientRef.current.stop();
         ambientRef.current = null;
       }
-      if (!ambientEnabled) return;
       const ctx = engine.context;
       if (!ctx) return;
       const ambient = await createAmbient(ctx, schemaId, BASE_URL);
       engine.connectAmbient(ambient.outputNodes);
       ambientRef.current = ambient;
     },
-    [ambientEnabled]
+    []
   );
 
   useEffect(() => {
@@ -103,17 +102,12 @@ export function useAudioEngine(): AudioEngineState {
     await engine.startMicrophone();
     setAudioSourceType("microphone");
     setIsPlaying(true);
-    await startAmbient(currentSchemaId);
-  }, [ensureInit, currentSchemaId, startAmbient]);
+  }, [ensureInit]);
 
   const stopMic = useCallback(() => {
     engine.stopSource();
     setIsPlaying(false);
     setAudioSourceType(null);
-    if (ambientRef.current) {
-      ambientRef.current.stop();
-      ambientRef.current = null;
-    }
   }, []);
 
   const play = useCallback(async () => {
@@ -121,26 +115,17 @@ export function useAudioEngine(): AudioEngineState {
     await engine.resume();
     engine.playFile();
     setIsPlaying(true);
-    await startAmbient(currentSchemaId);
-  }, [ensureInit, currentSchemaId, startAmbient]);
+  }, [ensureInit]);
 
   const pause = useCallback(() => {
     engine.pauseFile();
     setIsPlaying(false);
-    if (ambientRef.current) {
-      ambientRef.current.stop();
-      ambientRef.current = null;
-    }
   }, []);
 
   const stop = useCallback(() => {
     engine.stopSource();
     setIsPlaying(false);
     setHasAudioFile(engine.hasAudioFile);
-    if (ambientRef.current) {
-      ambientRef.current.stop();
-      ambientRef.current = null;
-    }
   }, []);
 
   const selectSchema = useCallback(
@@ -152,15 +137,14 @@ export function useAudioEngine(): AudioEngineState {
       setEffectSettings(schema.defaults);
       setIsClean(false);
       engine.applySettings(schema.defaults);
-      if (ambientRef.current) {
+      if (ambientEnabled) {
+        await startAmbient(id);
+      } else if (ambientRef.current) {
         ambientRef.current.stop();
         ambientRef.current = null;
       }
-      if (isPlaying && ambientEnabled) {
-        await startAmbient(id);
-      }
     },
-    [ensureInit, isPlaying, ambientEnabled, startAmbient]
+    [ensureInit, ambientEnabled, startAmbient]
   );
 
   const cleanSignal = useCallback(async () => {
@@ -209,16 +193,20 @@ export function useAudioEngine(): AudioEngineState {
   }, [currentSchemaId]);
 
   const setAmbientEnabledCb = useCallback(
-    (enabled: boolean) => {
+    async (enabled: boolean) => {
       setAmbientEnabled(enabled);
-      if (!enabled && ambientRef.current) {
-        ambientRef.current.stop();
-        ambientRef.current = null;
-      } else if (enabled && isPlaying) {
-        startAmbient(currentSchemaId);
+      if (!enabled) {
+        if (ambientRef.current) {
+          ambientRef.current.stop();
+          ambientRef.current = null;
+        }
+      } else {
+        await ensureInit();
+        await engine.resume();
+        await startAmbient(currentSchemaId);
       }
     },
-    [isPlaying, currentSchemaId, startAmbient]
+    [ensureInit, currentSchemaId, startAmbient]
   );
 
   return {
