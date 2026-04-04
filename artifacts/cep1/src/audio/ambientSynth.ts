@@ -365,11 +365,12 @@ export function createScarfaceAmbient(ctx: AudioContext): SchemaAmbient {
 
   const bpm = 120;
   const beatInterval = 60 / bpm;
-  const startTime = ctx.currentTime + 0.1;
+  const barDuration = beatInterval * 4;
+  const lookahead = 2.0;
+  const scheduleInterval = 500;
 
-  const kickNodes: AudioNode[] = [];
-  const hatNodes: AudioNode[] = [];
-  const stopFns: Array<() => void> = [];
+  let nextBarTime = ctx.currentTime + 0.1;
+  let stopped = false;
 
   function scheduleKick(time: number) {
     const osc = ctx.createOscillator();
@@ -381,10 +382,8 @@ export function createScarfaceAmbient(ctx: AudioContext): SchemaAmbient {
     env.gain.exponentialRampToValueAtTime(0.001, time + 0.25);
     osc.connect(env);
     env.connect(masterGain);
-    kickNodes.push(env);
     osc.start(time);
     osc.stop(time + 0.3);
-    stopFns.push(() => { try { osc.stop(); } catch {} });
   }
 
   function scheduleHat(time: number, volume: number) {
@@ -398,15 +397,11 @@ export function createScarfaceAmbient(ctx: AudioContext): SchemaAmbient {
     noise.connect(filter);
     filter.connect(env);
     env.connect(masterGain);
-    hatNodes.push(env);
     noise.start(time);
     noise.stop(time + 0.06);
-    stopFns.push(() => { try { noise.stop(); } catch {} });
   }
 
-  const numBars = 64;
-  for (let bar = 0; bar < numBars; bar++) {
-    const barStart = startTime + bar * beatInterval * 4;
+  function scheduleBar(barStart: number) {
     scheduleKick(barStart);
     scheduleKick(barStart + beatInterval * 2);
     scheduleHat(barStart + beatInterval, 0.4);
@@ -417,10 +412,22 @@ export function createScarfaceAmbient(ctx: AudioContext): SchemaAmbient {
     scheduleHat(barStart + beatInterval * 3.5, 0.15);
   }
 
+  function tick() {
+    if (stopped) return;
+    while (nextBarTime < ctx.currentTime + lookahead) {
+      scheduleBar(nextBarTime);
+      nextBarTime += barDuration;
+    }
+  }
+
+  tick();
+  const intervalId = setInterval(tick, scheduleInterval);
+
   return {
     outputNodes: [masterGain],
     stop: () => {
-      stopFns.forEach((fn) => { try { fn(); } catch {} });
+      stopped = true;
+      clearInterval(intervalId);
     },
   };
 }
