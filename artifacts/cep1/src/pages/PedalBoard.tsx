@@ -234,7 +234,7 @@ export default function PedalBoard() {
               </div>
               <div
                 className="uppercase tracking-widest"
-                style={{ color: "rgba(255,255,255,0.25)", fontSize: 8, letterSpacing: "0.25em", marginTop: 1 }}
+                style={{ color: "rgba(255,255,255,0.6)", fontSize: 8, letterSpacing: "0.25em", marginTop: 1 }}
               >
                 Cinematic Effects Processor
               </div>
@@ -262,7 +262,7 @@ export default function PedalBoard() {
                   {isPlaying ? "Active" : "Standby"}
                 </span>
               </div>
-              <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 7, letterSpacing: "0.05em", paddingLeft: 16 }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 7, letterSpacing: "0.05em", paddingLeft: 16 }}>
                 v1.0 by @floozyspeak // Dan Rockwell 2026
               </span>
             </div>
