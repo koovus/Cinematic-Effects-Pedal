@@ -171,6 +171,8 @@ export default function PedalBoard() {
     stopRecording,
     ambientEnabled,
     setAmbientEnabled,
+    cleanSignal,
+    isClean,
   } = useAudioEngine();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -262,6 +264,24 @@ export default function PedalBoard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={cleanSignal}
+              className="px-4 py-2 rounded-lg font-black uppercase transition-all duration-150"
+              style={{
+                background: isClean
+                  ? "rgba(255,255,255,0.12)"
+                  : "rgba(255,255,255,0.05)",
+                border: `1px solid ${isClean ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.12)"}`,
+                color: isClean ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
+                fontSize: 10,
+                letterSpacing: "0.15em",
+                boxShadow: isClean ? "0 0 12px rgba(255,255,255,0.08)" : undefined,
+                transition: "all 0.2s",
+              }}
+            >
+              {isClean ? "◈ CLEAN" : "◈ CLEAN SIGNAL"}
+            </button>
+
             <RecButton
               isRecording={isRecording}
               onStart={startRecording}

@@ -1,4 +1,26 @@
-import type { MovieSchema } from "./types";
+import type { MovieSchema, EffectSettings } from "./types";
+
+export const CLEAN_SIGNAL_PRESET: EffectSettings = {
+  reverbMix: 0,
+  reverbDecay: 1.0,
+  distortionAmount: 0,
+  distortionMix: 0,
+  delayTime: 0.5,
+  delayFeedback: 0,
+  delayMix: 0,
+  flangerDepth: 0,
+  flangerRate: 0.5,
+  flangerMix: 0,
+  filterFreq: 20000,
+  filterQ: 0.707,
+  filterType: "lowpass",
+  compThreshold: 0,
+  compRatio: 1,
+  compAttack: 0.003,
+  compRelease: 0.25,
+  masterGain: 0.9,
+  ambientGain: 0,
+};
 
 export const SCHEMAS: MovieSchema[] = [
   {

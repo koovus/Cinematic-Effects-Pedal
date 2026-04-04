@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import engine from "../audio/AudioEngine";
 import { createAmbient } from "../audio/ambientSynth";
-import { SCHEMAS, getSchema } from "../schemas/definitions";
+import { SCHEMAS, getSchema, CLEAN_SIGNAL_PRESET } from "../schemas/definitions";
 import type { EffectSettings, MovieSchema } from "../schemas/types";
 
 export type AudioSourceType = "file" | "microphone" | null;
@@ -30,6 +30,8 @@ export interface AudioEngineState {
   stopRecording: () => void;
   setAmbientEnabled: (enabled: boolean) => void;
   ambientEnabled: boolean;
+  cleanSignal: () => void;
+  isClean: boolean;
 }
 
 const BASE_URL = import.meta.env.BASE_URL ?? "/";
@@ -47,6 +49,7 @@ export function useAudioEngine(): AudioEngineState {
     getSchema("jurassic-park").defaults
   );
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const [isClean, setIsClean] = useState(false);
   const ambientRef = useRef<{ stop: () => void } | null>(null);
   const initRef = useRef(false);
 
@@ -147,6 +150,7 @@ export function useAudioEngine(): AudioEngineState {
       const schema = getSchema(id);
       setCurrentSchemaId(id);
       setEffectSettings(schema.defaults);
+      setIsClean(false);
       engine.applySettings(schema.defaults);
       if (ambientRef.current) {
         ambientRef.current.stop();
@@ -158,6 +162,18 @@ export function useAudioEngine(): AudioEngineState {
     },
     [ensureInit, isPlaying, ambientEnabled, startAmbient]
   );
+
+  const cleanSignal = useCallback(async () => {
+    await ensureInit();
+    await engine.resume();
+    engine.applySettings(CLEAN_SIGNAL_PRESET);
+    setEffectSettings(CLEAN_SIGNAL_PRESET);
+    setIsClean(true);
+    if (ambientRef.current) {
+      ambientRef.current.stop();
+      ambientRef.current = null;
+    }
+  }, [ensureInit]);
 
   const setParam = useCallback(
     (param: keyof EffectSettings, value: number | string) => {
@@ -229,5 +245,7 @@ export function useAudioEngine(): AudioEngineState {
     stopRecording,
     setAmbientEnabled: setAmbientEnabledCb,
     ambientEnabled,
+    cleanSignal,
+    isClean,
   };
 }
