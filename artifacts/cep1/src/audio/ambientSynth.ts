@@ -491,6 +491,9 @@ const FILE_LAYERS: Record<string, { file: string; gain: number }[]> = {
     { file: "layer-1.mp3", gain: 0.6 },
     { file: "layer-2.mp3", gain: 0.7 },
   ],
+  "scarface": [
+    { file: "layer-1.mp3", gain: 0.7 },
+  ],
   "contact": [
     { file: "layer-1.mp3", gain: 0.25 },
     { file: "layer-2.mp3", gain: 0.35 },
@@ -504,6 +507,7 @@ const FALLBACKS: Record<string, (ctx: AudioContext) => SchemaAmbient> = {
   "jurassic-park": createJurassicAmbient,
   "star-wars": createStarWarsAmbient,
   "alive": createAliveAmbient,
+  "scarface": createScarfaceAmbient,
   "contact": createContactAmbient,
 };
 
