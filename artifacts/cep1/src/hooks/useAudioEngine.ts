@@ -71,7 +71,7 @@ export function useAudioEngine(): AudioEngineState {
       if (!ambientEnabled) return;
       const ctx = engine.context;
       if (!ctx) return;
-      const ambient = createAmbient(ctx, schemaId);
+      const ambient = await createAmbient(ctx, schemaId, BASE_URL);
       engine.connectAmbient(ambient.outputNodes);
       ambientRef.current = ambient;
     },

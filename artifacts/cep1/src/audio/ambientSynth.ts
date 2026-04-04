@@ -432,13 +432,70 @@ export function createScarfaceAmbient(ctx: AudioContext): SchemaAmbient {
   };
 }
 
-export function createAmbient(ctx: AudioContext, schemaId: string): SchemaAmbient {
+async function createContactAmbientFromFiles(
+  ctx: AudioContext,
+  baseUrl: string
+): Promise<SchemaAmbient> {
+  const masterGain = ctx.createGain();
+  masterGain.gain.value = 0.75;
+
+  const sources: AudioBufferSourceNode[] = [];
+
+  const LAYERS: { file: string; gain: number }[] = [
+    { file: "layer-1.mp3", gain: 0.25 },
+    { file: "layer-2.mp3", gain: 0.35 },
+    { file: "layer-3.mp3", gain: 0.5 },
+    { file: "layer-4.mp3", gain: 0.6 },
+    { file: "layer-5.mp3", gain: 0.65 },
+  ];
+
+  async function loadLayer(file: string, gain: number): Promise<void> {
+    try {
+      const url = `${baseUrl}sounds/contact/${file}`;
+      const response = await fetch(url);
+      if (!response.ok) return;
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = await ctx.decodeAudioData(arrayBuffer);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = gain;
+      source.connect(gainNode);
+      gainNode.connect(masterGain);
+      sources.push(source);
+      source.start();
+    } catch {
+      // layer failed to load — skip silently
+    }
+  }
+
+  await Promise.all(LAYERS.map(({ file, gain }) => loadLayer(file, gain)));
+
+  if (sources.length === 0) {
+    masterGain.disconnect();
+    return createContactAmbient(ctx);
+  }
+
+  return {
+    outputNodes: [masterGain],
+    stop: () => {
+      sources.forEach((s) => { try { s.stop(); } catch {} });
+    },
+  };
+}
+
+export async function createAmbient(
+  ctx: AudioContext,
+  schemaId: string,
+  baseUrl = "/"
+): Promise<SchemaAmbient> {
   switch (schemaId) {
     case "jurassic-park": return createJurassicAmbient(ctx);
     case "star-wars": return createStarWarsAmbient(ctx);
     case "chainsaw-massacre": return createChainsawAmbient(ctx);
     case "alive": return createAliveAmbient(ctx);
-    case "contact": return createContactAmbient(ctx);
+    case "contact": return createContactAmbientFromFiles(ctx, baseUrl);
     case "scarface": return createScarfaceAmbient(ctx);
     default: return createJurassicAmbient(ctx);
   }
