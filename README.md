@@ -56,9 +56,9 @@ The Delay panel exposes a 7-mode algorithm selector (pill buttons) plus a **Mod*
 | **TAPE** | Tape echo: LPF + soft-clip + wow (0.8 Hz) + flutter (7.3 Hz) LFOs | Aged, drifting echoes with tape character |
 | **VERB** | Reverb-in-feedback: short plate ConvolverNode recirculates each repeat | Reverb blooms inside every echo |
 | **OCT** | Granular octave-up pitch shift (2× read speed) with internal feedback | Each repeat rises one octave |
-| **SHIM** | OCT worklet + large ConvolverNode reverb wash on output | Shimmering, angelic trails |
+| **SHIMMER** | ShimmerDelayProcessor (4096-sample grain, smoother than OCT) + ConvolverNode reverb wash on output | Shimmering, angelic trails |
 
-The **Mod** knob controls LFO depth for BBD wobble and tape wow/flutter. All 7 sub-graphs run in parallel via GainNode gates — switching is instant and click-free (30 ms cross-fade).
+The **Mod** knob controls LFO depth for BBD wobble and tape wow/flutter. All 7 sub-graphs are permanently wired in parallel via GainNode gates — switching is instant and click-free (30 ms cross-fade). Parallel-gate design avoids glitches on mode change. SHIMMER applies reverb externally (after the worklet) via a dedicated `shimConv` ConvolverNode.
 
 ### Signal Visualizer
 Real-time canvas display with two modes switchable by toggle:

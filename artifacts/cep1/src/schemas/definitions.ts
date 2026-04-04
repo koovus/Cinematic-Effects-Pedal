@@ -10,7 +10,7 @@ const DELAY_MODE_KNOB: KnobDef = {
     { id: "tape",     label: "TAPE" },
     { id: "verb",     label: "VERB" },
     { id: "oct",      label: "OCT" },
-    { id: "shimmer",  label: "SHIM" },
+    { id: "shimmer",  label: "SHIMMER" },
   ],
 };
 
