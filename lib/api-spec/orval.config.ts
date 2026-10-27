@@ -30,6 +30,8 @@ export default defineConfig({
       clean: true,
       prettier: true,
       override: {
+        // Orval cannot infer the React Query major from a pnpm catalog reference.
+        query: { version: 5 },
         fetch: {
           includeHttpResponseReturnType: false,
         },

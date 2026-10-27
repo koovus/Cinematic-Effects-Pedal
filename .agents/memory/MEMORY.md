@@ -1,0 +1,1 @@
+- [Catalog-aware code generation](catalog-codegen.md) — explicitly configure generator dependency majors when pnpm catalog references prevent version detection.
